@@ -15,18 +15,15 @@ use flate2::read::GzDecoder;
 use std::env;
 use std::path::Path;
 mod types;
+mod manifest;
+
 use types::{DataFileField,KeyRecord};
 
-mod manifest;
+
 
 fn main() {
     env::set_current_dir("./nixos-sats-data").unwrap();
     let manifest = manifest::ManifestLoader::load(Path::new("./nix-cache/Analytics/2018-12-06T08-00Z/manifest.json")).unwrap();
-
-    if manifest.file_format != "CSV" {
-        panic!("File schema {} is unsupported, only CSV is supported",
-               manifest.file_format);
-    }
 
     let fields: Vec<DataFileField> = {
         let mut rdr = csv::ReaderBuilder::new()

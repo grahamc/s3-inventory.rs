@@ -53,7 +53,14 @@ impl ManifestLoader {
             });
         }
 
-        Ok(serde_json::from_str(&contents)?)
+        let manifest: Manifest = serde_json::from_str(&contents)?;
+
+        if manifest.file_format != "CSV" {
+            panic!("File schema {} is unsupported, only CSV is supported",
+                   manifest.file_format);
+        }
+
+        return Ok(manifest);
     }
 }
 
