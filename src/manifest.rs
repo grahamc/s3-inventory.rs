@@ -15,6 +15,7 @@ pub enum LoadError {
     Io(io::Error),
     ChecksumMismatch { expected: String, actual: String },
     ParseError(serde_json::Error),
+    UnsupportedManifestFormat(String),
 }
 
 #[derive(Deserialize, Debug)]
@@ -56,8 +57,7 @@ impl ManifestLoader {
         let manifest: Manifest = serde_json::from_str(&contents)?;
 
         if manifest.file_format != "CSV" {
-            panic!("File schema {} is unsupported, only CSV is supported",
-                   manifest.file_format);
+            return Err(LoadError::UnsupportedManifestFormat(manifest.file_format));
         }
 
         return Ok(manifest);
