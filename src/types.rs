@@ -1,19 +1,19 @@
 
 #[derive(Deserialize, Debug)]
-pub struct Manifest<'a> {
+pub struct Manifest {
     #[serde(rename="fileFormat")]
-    pub file_format: &'a str,
+    pub file_format: String,
     #[serde(rename="fileSchema")]
-    pub file_schema: &'a str,
-    pub files: Vec<DataFile<'a>>,
+    pub file_schema: String,
+    pub files: Vec<DataFile>,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct DataFile<'a> {
-    pub key: &'a str,
+pub struct DataFile {
+    pub key: String,
     pub size: u32,
     #[serde(rename="MD5checksum")]
-    pub md5_checksum: &'a str,
+    pub md5_checksum: String,
 }
 
 #[derive(Debug)]

@@ -13,31 +13,15 @@ use std::io::BufReader;
 use std::io::Read;
 use flate2::read::GzDecoder;
 use std::env;
+use std::path::Path;
 mod types;
-use types::{Manifest,DataFileField,KeyRecord};
+use types::{DataFileField,KeyRecord};
+
+mod manifest;
 
 fn main() {
     env::set_current_dir("./nixos-sats-data").unwrap();
-    let hash_file = File::open("./nix-cache/Analytics/2018-12-06T08-00Z/manifest.checksum").unwrap();
-    let mut buf_reader = BufReader::new(hash_file);
-    let mut checksum = String::new();
-    buf_reader.read_to_string(&mut checksum).unwrap();
-
-    let file = File::open("./nix-cache/Analytics/2018-12-06T08-00Z/manifest.json").unwrap();
-    let mut buf_reader = BufReader::new(file);
-    let mut contents = String::new();
-    buf_reader.read_to_string(&mut contents).unwrap();
-    let found_hash = format!("{:x}", md5::compute(&contents));
-
-    if checksum.trim() != found_hash {
-        println!("Checksum mismatch:");
-        println!("Expected: {}", checksum.trim());
-        println!("On-disk: {}", found_hash);
-        panic!();
-    }
-
-    let manifest = serde_json::from_str::<Manifest>(&contents)
-        .unwrap();
+    let manifest = manifest::ManifestLoader::load(Path::new("./nix-cache/Analytics/2018-12-06T08-00Z/manifest.json")).unwrap();
 
     if manifest.file_format != "CSV" {
         panic!("File schema {} is unsupported, only CSV is supported",
@@ -72,7 +56,7 @@ fn main() {
     println!("Largest data file: {:?} bytes", data.get(0).unwrap());
 
     for file in manifest.files.into_iter() {
-        let mut buf_reader = BufReader::new(File::open(file.key).unwrap());
+        let mut buf_reader = BufReader::new(File::open(&file.key).unwrap());
         let mut buffer = vec![0; file.size as usize];
         buf_reader.read(&mut buffer).unwrap();
         let found_hash = format!("{:x}", md5::compute(&buffer));
