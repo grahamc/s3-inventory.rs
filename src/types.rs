@@ -1,14 +1,5 @@
 
 #[derive(Deserialize, Debug)]
-pub struct Manifest {
-    #[serde(rename="fileFormat")]
-    pub file_format: String,
-    #[serde(rename="fileSchema")]
-    pub file_schema: String,
-    pub files: Vec<DataFile>,
-}
-
-#[derive(Deserialize, Debug)]
 pub struct DataFile {
     pub key: String,
     pub size: u32,

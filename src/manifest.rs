@@ -7,9 +7,24 @@ use std::io;
 use std::path::Path;
 use md5;
 
-use types::Manifest;
-
+use types::DataFile;
 pub struct ManifestLoader {}
+
+#[derive(Debug)]
+pub enum LoadError {
+    Io(io::Error),
+    ChecksumMismatch { expected: String, actual: String },
+    ParseError(serde_json::Error),
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Manifest {
+    #[serde(rename="fileFormat")]
+    pub file_format: String,
+    #[serde(rename="fileSchema")]
+    pub file_schema: String,
+    pub files: Vec<DataFile>,
+}
 
 impl ManifestLoader {
     pub fn load(manifest_path: &Path) -> Result<Manifest, LoadError> {
@@ -40,13 +55,6 @@ impl ManifestLoader {
 
         Ok(serde_json::from_str(&contents)?)
     }
-}
-
-#[derive(Debug)]
-pub enum LoadError {
-    Io(io::Error),
-    ChecksumMismatch { expected: String, actual: String },
-    ParseError(serde_json::Error),
 }
 
 impl From<io::Error> for LoadError {
