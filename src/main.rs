@@ -13,54 +13,8 @@ use std::io::BufReader;
 use std::io::Read;
 use flate2::read::GzDecoder;
 use std::env;
-
-#[derive(Deserialize, Debug)]
-struct Manifest<'a> {
-    #[serde(rename="fileFormat")]
-    file_format: &'a str,
-    #[serde(rename="fileSchema")]
-    file_schema: &'a str,
-    files: Vec<DataFile<'a>>,
-}
-
-#[derive(Deserialize, Debug)]
-struct DataFile<'a> {
-    key: &'a str,
-    size: u32,
-    #[serde(rename="MD5checksum")]
-    md5_checksum: &'a str,
-}
-
-#[derive(Debug)]
-enum DataFileField {
-    Bucket,
-    Key,
-    Size,
-    ETag,
-    StorageClass,
-}
-
-#[derive(Debug, Default)]
-struct KeyRecord<'a> {
-    bucket: Option<&'a str>,
-    key: Option<&'a str>,
-    size: Option<usize>,
-    etag: Option<&'a str>,
-    storage_class: Option<&'a str>,
-}
-
-impl <'a> From<&'a str> for DataFileField {
-    fn from(s: &'a str) -> DataFileField {
-        match s {
-            "Bucket" => DataFileField::Bucket,
-            "Key" => DataFileField::Key,
-            "Size" => DataFileField::Size,
-            "ETag" => DataFileField::ETag,
-            "StorageClass" => DataFileField::StorageClass,
-            _ => panic!("Unknown data field: {:?}", s),
-        }
-    }
-}
+mod types;
+use types::{Manifest,DataFileField,KeyRecord};
 
 fn main() {
     env::set_current_dir("./nixos-sats-data").unwrap();
