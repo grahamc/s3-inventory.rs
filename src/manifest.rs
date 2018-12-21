@@ -1,4 +1,5 @@
 
+use serde;
 use serde_json;
 use std::fs::File;
 use std::io::BufReader;
@@ -6,8 +7,10 @@ use std::io::Read;
 use std::io;
 use std::path::Path;
 use md5;
+use csv;
+use serde::de::Error;
+use datafile::{DataFile, DataFileField};
 
-use types::DataFile;
 pub struct ManifestLoader {}
 
 #[derive(Debug)]
@@ -22,9 +25,52 @@ pub enum LoadError {
 pub struct Manifest {
     #[serde(rename="fileFormat")]
     pub file_format: String,
-    #[serde(rename="fileSchema")]
-    pub file_schema: String,
+    #[serde(rename="fileSchema", deserialize_with="data_file_field_deserializer")]
+    pub file_schema: Vec<DataFileField>,
     pub files: Vec<DataFile>,
+}
+
+fn data_file_field_deserializer<'de, D>(input: D) -> Result<Vec<DataFileField>, D::Error>
+where D: serde::Deserializer<'de> {
+    let raw: &str = serde::Deserialize::deserialize(input)?;
+
+    let mut rdr = csv::ReaderBuilder::new()
+        .has_headers(false)
+        .trim(csv::Trim::All)
+        .from_reader(raw.as_bytes());
+
+    match rdr.records().next() {
+        Some(Ok(record)) => {
+            let mut fields: Vec<DataFileField> = vec![];
+
+            for field in record.iter() {
+                match field {
+                    "Bucket" => { fields.push(DataFileField::Bucket); },
+                    "Key" => { fields.push(DataFileField::Key); },
+                    "Size" => { fields.push(DataFileField::Size); },
+                    "ETag" => { fields.push(DataFileField::ETag); },
+                    "StorageClass" => { fields.push(DataFileField::StorageClass); },
+                    field => {
+                        return Err(D::Error::unknown_variant(
+                            field,
+                            &["Bucket", "Key", "Size", "ETag",
+                              "StorageClass"]
+                        ));
+                    }
+                }
+            }
+
+            Ok(fields)
+        }
+        Some(Err(err)) => {
+            Err(D::Error::custom(
+                format!("error parsing fields as a CSV: {:?}", err)
+            ))
+        }
+        None => {
+            Err(D::Error::invalid_length(0, &"at least one field"))
+        }
+    }
 }
 
 impl ManifestLoader {

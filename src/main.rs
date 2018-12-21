@@ -14,28 +14,17 @@ use std::io::Read;
 use flate2::read::GzDecoder;
 use std::env;
 use std::path::Path;
+
+mod datafile;
 mod types;
 mod manifest;
 
-use types::{DataFileField,KeyRecord};
-
-
+use types::KeyRecord;
+use datafile::DataFileField;
 
 fn main() {
     env::set_current_dir("./nixos-sats-data").unwrap();
     let manifest = manifest::ManifestLoader::load(Path::new("./nix-cache/Analytics/2018-12-06T08-00Z/manifest.json")).unwrap();
-
-    let fields: Vec<DataFileField> = {
-        let mut rdr = csv::ReaderBuilder::new()
-            .has_headers(false)
-            .trim(csv::Trim::All)
-            .from_reader(manifest.file_schema.as_bytes());
-
-        rdr.records().next().unwrap().unwrap()
-            .iter()
-            .map::<DataFileField, _>(|s| s.into())
-            .collect::<Vec<DataFileField>>()
-    };
 
     let mut data = manifest.files.iter()
         .map(|datafile| datafile.size)
@@ -51,6 +40,8 @@ fn main() {
     println!("Smallest data file: {:?} bytes", data.get(0).unwrap());
     data.reverse();
     println!("Largest data file: {:?} bytes", data.get(0).unwrap());
+    let fields = manifest.file_schema;
+    println!("Fields: {:?}", fields);
 
     for file in manifest.files.into_iter() {
         let mut buf_reader = BufReader::new(File::open(&file.key).unwrap());
