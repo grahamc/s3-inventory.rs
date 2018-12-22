@@ -1,9 +1,9 @@
 
 #[derive(Debug, Default)]
-pub struct KeyRecord<'a> {
-    pub bucket: Option<&'a str>,
-    pub key: Option<&'a str>,
+pub struct KeyRecord {
+    pub bucket: Option<String>,
+    pub key: Option<String>,
     pub size: Option<usize>,
-    pub etag: Option<&'a str>,
-    pub storage_class: Option<&'a str>,
+    pub etag: Option<String>,
+    pub storage_class: Option<String>,
 }

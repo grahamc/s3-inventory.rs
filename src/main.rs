@@ -8,19 +8,13 @@ extern crate md5;
 extern crate flate2;
 extern crate csv;
 
-use std::fs::File;
-use std::io::BufReader;
-use std::io::Read;
-use flate2::read::GzDecoder;
 use std::env;
 use std::path::Path;
 
 mod datafile;
 mod types;
 mod manifest;
-
-use types::KeyRecord;
-use datafile::DataFileField;
+use datafile::LoadedDataFile;
 
 fn main() {
     env::set_current_dir("./nixos-sats-data").unwrap();
@@ -44,25 +38,13 @@ fn main() {
     println!("Fields: {:?}", fields);
 
     for file in manifest.files.into_iter() {
-        let mut buf_reader = BufReader::new(File::open(&file.key).unwrap());
-        let mut buffer = vec![0; file.size as usize];
-        buf_reader.read(&mut buffer).unwrap();
-        let found_hash = format!("{:x}", md5::compute(&buffer));
-
-        if file.md5_checksum != found_hash {
-            println!("{} -- checksum mismatch", file.key);
-            println!("expect: {}", file.md5_checksum);
-            println!("actual: {}", found_hash);
-            panic!();
+        println!("{:?}", file);
+        let mut loadedDataFile: LoadedDataFile<_> = LoadedDataFile::new(file).unwrap();
+        for record in loadedDataFile.all(&fields) {
+             println!("{:?}", record);
         }
-        println!("OK: {}", file.key);
 
-        let mut d = GzDecoder::new(&buffer[..]);
-
-        let mut rdr = csv::ReaderBuilder::new()
-            .has_headers(false)
-            .from_reader(d);
-
+        /*
         for record_data in rdr.records() {
             let data = record_data.unwrap();
             let mut record: KeyRecord = Default::default();
@@ -80,5 +62,6 @@ fn main() {
                 println!("{:?}", record.key);
             }
         }
+        */
     }
 }
