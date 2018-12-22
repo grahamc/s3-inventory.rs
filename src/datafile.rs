@@ -16,7 +16,7 @@ pub struct DataFile {
     pub md5_checksum: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum DataFileField {
     Bucket,
     Key,
@@ -69,7 +69,7 @@ impl <'a, R: io::Read + 'a> LoadedDataFile<R> {
 }
 
 impl <'a> LoadedDataFile<GzDecoder<io::Cursor<Vec<u8>>>> {
-    pub fn new(df: DataFile) -> Result<LoadedDataFile<GzDecoder<io::Cursor<Vec<u8>>>>, DataFileError> {
+    pub fn new(df: &DataFile) -> Result<LoadedDataFile<GzDecoder<io::Cursor<Vec<u8>>>>, DataFileError> {
         let contents = {
             let mut reader = BufReader::new(File::open(&df.key)?);
             let mut buffer = vec![0; df.size as usize];
